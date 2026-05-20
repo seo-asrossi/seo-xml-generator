@@ -214,11 +214,11 @@ LOCALIZATION:
   - es: Rebajas
   - de: Sale
   - nl: Sale
-  - pl: Wyprzedaż
-  - da: Udsalg
-  - sv: Rea
-  - ja: セール
-  - ko: 세일
+  - pl: Sale
+  - da: Sale
+  - sv: Sale
+  - ja: パブリックセール
+  - ko: Sale
 
 URL RULES:
 - lowercase
