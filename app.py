@@ -262,7 +262,7 @@ STRICT TAXONOMY:
 
 2. For sale pages:
 - page_title must follow: [Localized Sale] | [Localized Gender's Product] [Localized Discount] | [Brand]
-- headline must follow: [Localized Sale] | [Localized Gender's Product] [Localized Discount]
+- headline must follow: [Localized Sale]: [Localized Gender's Product]
 - page_url must follow: [localized-sale]-[localized-gender]-[localized-product]
 
 LOCALIZATION:
