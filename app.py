@@ -314,20 +314,38 @@ META DESCRIPTION:
 - mention the brand
 - if sale page, mention the discount
 
-Return ONLY valid CSV.
-Do not wrap the CSV in markdown.
+Return ONLY valid JSON.
+Do not wrap the JSON in markdown.
 Do not add explanations.
+
+The JSON must be an array of objects.
+
+Each object must contain:
+- category_id
+- locale
+- page_description
+- page_title
+- page_url
+- headline
 
 Columns:
 category_id,locale,page_description,page_title,page_url,headline
 """
 
-        response = model.generate_content(prompt)
-        csv_text = response.text.strip()
+response = model.generate_content(prompt)
+json_text = response.text.strip()
 
-        ai_df = pd.read_csv(io.StringIO(csv_text))
-        ai_df["category_id"] = ai_df["category_id"].astype(str)
-        ai_df["locale"] = ai_df["locale"].astype(str)
+# Remove markdown fences if Gemini adds them
+json_text = json_text.replace("```json", "").replace("```", "").strip()
+
+import json
+
+ai_data = json.loads(json_text)
+
+ai_df = pd.DataFrame(ai_data)
+
+ai_df["category_id"] = ai_df["category_id"].astype(str)
+ai_df["locale"] = ai_df["locale"].astype(str)
 
         for index, row in df.iterrows():
             if row["action"] == "update":
