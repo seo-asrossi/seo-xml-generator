@@ -46,6 +46,7 @@ st.caption("Add up to 10 category IDs. Use one row per category.")
 
 category_input_df = st.data_editor(
     st.session_state.category_input_df,
+    key="category_input_editor",
     num_rows="dynamic",
     use_container_width=True,
     column_config={
@@ -58,8 +59,6 @@ category_input_df = st.data_editor(
         "product": st.column_config.TextColumn("Product")
     }
 )
-
-st.session_state.category_input_df = category_input_df
 
 valid_categories = category_input_df[
     category_input_df["category_id"].astype(str).str.strip().ne("")
