@@ -33,16 +33,45 @@ COUNTRY_LANGUAGES = [
 if "df" not in st.session_state:
     st.session_state.df = None
 
-category_id = st.text_input("Category ID", placeholder="e.g. 25300")
+if "category_input_df" not in st.session_state:
+    st.session_state.category_input_df = pd.DataFrame({
+        "category_id": [""],
+        "landing_page_name": [""],
+        "gender": ["Men"],
+        "product": [""]
+    })
 
-category_name = st.text_input(
-    "Category / Landing Page Name",
-    placeholder="e.g. Men's Trousers & Shorts"
+st.subheader("Category Inputs")
+st.caption("Add up to 10 category IDs. Use one row per category.")
+
+category_input_df = st.data_editor(
+    st.session_state.category_input_df,
+    num_rows="dynamic",
+    use_container_width=True,
+    column_config={
+        "category_id": st.column_config.TextColumn("Category ID"),
+        "landing_page_name": st.column_config.TextColumn("Landing Page Name"),
+        "gender": st.column_config.SelectboxColumn(
+            "Gender",
+            options=["Men", "Women", "Kids"]
+        ),
+        "product": st.column_config.TextColumn("Product")
+    }
 )
 
-gender = st.selectbox("Gender", ["Men", "Women", "Kids"])
+st.session_state.category_input_df = category_input_df
 
-product = st.text_input("Product", placeholder="e.g. Jackets & Coats")
+valid_categories = category_input_df[
+    category_input_df["category_id"].astype(str).str.strip().ne("")
+].copy()
+
+valid_categories["category_id"] = valid_categories["category_id"].astype(str).str.strip()
+valid_categories["landing_page_name"] = valid_categories["landing_page_name"].astype(str).str.strip()
+valid_categories["gender"] = valid_categories["gender"].astype(str).str.strip()
+valid_categories["product"] = valid_categories["product"].astype(str).str.strip()
+
+if len(valid_categories) > 10:
+    st.error("Please use a maximum of 10 category IDs per batch.")
 
 brand = st.text_input("Brand", value="HUGO BOSS")
 
@@ -74,17 +103,23 @@ target_level = st.selectbox(
 rows = []
 
 if target_level == "default":
-    if st.button("Create table"):
-        rows.append({
-            "category_id": category_id,
-            "sfcc_level": "default",
-            "xml_lang": "",
-            "action": "update",
-            "page_title": "",
-            "page_description": "",
-            "page_url": "",
-            "headline": ""
-        })
+    create_table = st.button("Create table")
+
+    if create_table and len(valid_categories) <= 10:
+        for _, cat in valid_categories.iterrows():
+            rows.append({
+                "category_id": cat["category_id"],
+                "landing_page_name": cat["landing_page_name"],
+                "gender": cat["gender"],
+                "product": cat["product"],
+                "sfcc_level": "default",
+                "xml_lang": "",
+                "action": "update",
+                "page_description": "",
+                "page_title": "",
+                "page_url": "",
+                "headline": ""
+            })
 
 elif target_level == "language":
     selected_languages = st.multiselect(
@@ -93,18 +128,27 @@ elif target_level == "language":
         default=["en"]
     )
 
-    if st.button("Create table"):
-        for lang in selected_languages:
-            rows.append({
-                "category_id": category_id,
-                "sfcc_level": "language",
-                "xml_lang": lang,
-                "action": "update",
-                "page_title": "",
-                "page_description": "",
-                "page_url": "",
-                "headline": ""
-            })
+    if len(selected_languages) > 3:
+        st.warning("This is a large batch. For easier QA, consider using up to 3 languages at a time.")
+
+    create_table = st.button("Create table")
+
+    if create_table and len(valid_categories) <= 10:
+        for _, cat in valid_categories.iterrows():
+            for lang in selected_languages:
+                rows.append({
+                    "category_id": cat["category_id"],
+                    "landing_page_name": cat["landing_page_name"],
+                    "gender": cat["gender"],
+                    "product": cat["product"],
+                    "sfcc_level": "language",
+                    "xml_lang": lang,
+                    "action": "update",
+                    "page_description": "",
+                    "page_title": "",
+                    "page_url": "",
+                    "headline": ""
+                })
 
 elif target_level == "country-language":
     selected_country_languages = st.multiselect(
@@ -113,18 +157,27 @@ elif target_level == "country-language":
         default=["en-GB"]
     )
 
-    if st.button("Create table"):
-        for locale in selected_country_languages:
-            rows.append({
-                "category_id": category_id,
-                "sfcc_level": "country-language",
-                "xml_lang": locale,
-                "action": "update",
-                "page_title": "",
-                "page_description": "",
-                "page_url": "",
-                "headline": ""
-            })
+    if len(selected_country_languages) > 3:
+        st.warning("This is a large batch. For easier QA, consider using up to 3 locales at a time.")
+
+    create_table = st.button("Create table")
+
+    if create_table and len(valid_categories) <= 10:
+        for _, cat in valid_categories.iterrows():
+            for locale in selected_country_languages:
+                rows.append({
+                    "category_id": cat["category_id"],
+                    "landing_page_name": cat["landing_page_name"],
+                    "gender": cat["gender"],
+                    "product": cat["product"],
+                    "sfcc_level": "country-language",
+                    "xml_lang": locale,
+                    "action": "update",
+                    "page_description": "",
+                    "page_title": "",
+                    "page_url": "",
+                    "headline": ""
+                })
 
 else:
     selected_languages = st.multiselect(
@@ -139,30 +192,42 @@ else:
         default=["en-GB"]
     )
 
-    if st.button("Create table"):
-        for lang in selected_languages:
-            rows.append({
-                "category_id": category_id,
-                "sfcc_level": "language",
-                "xml_lang": lang,
-                "action": "update",
-                "page_title": "",
-                "page_description": "",
-                "page_url": "",
-                "headline": ""
-            })
+    if len(selected_languages) > 3:
+        st.warning("This is a large batch. For easier QA, consider using up to 3 languages at a time.")
 
-        for locale in selected_country_languages:
-            rows.append({
-                "category_id": category_id,
-                "sfcc_level": "country-language",
-                "xml_lang": locale,
-                "action": "clear",
-                "page_title": "",
-                "page_description": "",
-                "page_url": "",
-                "headline": ""
-            })
+    create_table = st.button("Create table")
+
+    if create_table and len(valid_categories) <= 10:
+        for _, cat in valid_categories.iterrows():
+            for lang in selected_languages:
+                rows.append({
+                    "category_id": cat["category_id"],
+                    "landing_page_name": cat["landing_page_name"],
+                    "gender": cat["gender"],
+                    "product": cat["product"],
+                    "sfcc_level": "language",
+                    "xml_lang": lang,
+                    "action": "update",
+                    "page_description": "",
+                    "page_title": "",
+                    "page_url": "",
+                    "headline": ""
+                })
+
+            for locale in selected_country_languages:
+                rows.append({
+                    "category_id": cat["category_id"],
+                    "landing_page_name": cat["landing_page_name"],
+                    "gender": cat["gender"],
+                    "product": cat["product"],
+                    "sfcc_level": "country-language",
+                    "xml_lang": locale,
+                    "action": "clear",
+                    "page_description": "",
+                    "page_title": "",
+                    "page_url": "",
+                    "headline": ""
+                })
 
 if rows:
     st.session_state.df = pd.DataFrame(rows)
@@ -172,25 +237,38 @@ if st.session_state.df is not None:
 
     st.subheader("SEO Copy / XML Preparation Table")
 
-    update_locales = df[df["action"] == "update"]["xml_lang"].tolist()
+    update_df = df[df["action"] == "update"].copy()
 
     if target_level == "default":
-        update_locales = ["default"]
+        update_df["ai_locale"] = "default"
+    else:
+        update_df["ai_locale"] = update_df["xml_lang"]
+
+    total_ai_rows = len(update_df)
+
+    if total_ai_rows > 30:
+        st.warning(f"This will generate {total_ai_rows} AI rows. Consider splitting the batch for easier QA.")
 
     if st.button("Generate AI SEO Copy"):
+        categories_for_prompt = update_df[
+            ["category_id", "landing_page_name", "gender", "product", "ai_locale"]
+        ].rename(columns={"ai_locale": "locale"})
+
+        categories_csv = categories_for_prompt.to_csv(index=False)
+
         prompt = f"""
 You are an international SEO specialist for a luxury fashion ecommerce brand.
 
-Generate SEO metadata using the exact taxonomy rules below.
+Generate SEO metadata for every category_id + locale combination in the CSV below.
 
-INPUTS:
-Gender: {gender}
-Product: {product}
+CATEGORY INPUTS CSV:
+{categories_csv}
+
+GLOBAL INPUTS:
 Brand: {brand}
 Is sale page: {is_sale}
 Discount message: {discount}
 SEO Brief: {brief}
-Locales: {", ".join(update_locales)}
 
 STRICT TAXONOMY:
 1. For non-sale pages:
@@ -228,6 +306,7 @@ URL RULES:
 - no special characters
 - no brand in URL
 - remove filler words where needed
+- keep Japanese and Korean URLs in English
 
 META DESCRIPTION:
 - max 155 characters
@@ -241,22 +320,29 @@ Do not wrap the CSV in markdown.
 Do not add explanations.
 
 Columns:
-locale,page_title,page_description,page_url,headline
+category_id,locale,page_description,page_title,page_url,headline
 """
 
         response = model.generate_content(prompt)
         csv_text = response.text.strip()
 
         ai_df = pd.read_csv(io.StringIO(csv_text))
+        ai_df["category_id"] = ai_df["category_id"].astype(str)
+        ai_df["locale"] = ai_df["locale"].astype(str)
 
         for index, row in df.iterrows():
             if row["action"] == "update":
                 locale_key = row["xml_lang"] if row["xml_lang"] else "default"
-                match = ai_df[ai_df["locale"] == locale_key]
+                category_key = str(row["category_id"])
+
+                match = ai_df[
+                    (ai_df["category_id"] == category_key) &
+                    (ai_df["locale"] == locale_key)
+                ]
 
                 if not match.empty:
-                    df.at[index, "page_title"] = match.iloc[0]["page_title"]
                     df.at[index, "page_description"] = match.iloc[0]["page_description"]
+                    df.at[index, "page_title"] = match.iloc[0]["page_title"]
                     df.at[index, "page_url"] = match.iloc[0]["page_url"]
                     df.at[index, "headline"] = match.iloc[0]["headline"]
 
@@ -273,6 +359,7 @@ locale,page_title,page_description,page_url,headline
 
     st.subheader("Preview")
     st.dataframe(st.session_state.df, use_container_width=True)
+
 
 def escape_xml(value):
     if pd.isna(value):
@@ -293,22 +380,18 @@ def generate_xml(df, catalog_id="hb-eu"):
     for category_id, group in df.groupby("category_id"):
         xml += f'  <category category-id="{category_id}">\n'
 
-        # PAGE ATTRIBUTES
         xml += '    <page-attributes>\n'
 
-        # 1. All page descriptions first
         for _, row in group.iterrows():
             lang_attr = f' xml:lang="{row["xml_lang"]}"' if row["xml_lang"] else ""
             value = "" if row["action"] == "clear" else escape_xml(row["page_description"])
             xml += f'      <page-description{lang_attr}>{value}</page-description>\n'
 
-        # 2. Then all page titles
         for _, row in group.iterrows():
             lang_attr = f' xml:lang="{row["xml_lang"]}"' if row["xml_lang"] else ""
             value = "" if row["action"] == "clear" else escape_xml(row["page_title"])
             xml += f'      <page-title{lang_attr}>{value}</page-title>\n'
 
-        # 3. Then all page URLs
         for _, row in group.iterrows():
             lang_attr = f' xml:lang="{row["xml_lang"]}"' if row["xml_lang"] else ""
             value = "" if row["action"] == "clear" else escape_xml(row["page_url"])
@@ -316,10 +399,8 @@ def generate_xml(df, catalog_id="hb-eu"):
 
         xml += '    </page-attributes>\n'
 
-        # CUSTOM ATTRIBUTES
         xml += '    <custom-attributes>\n'
 
-        # 4. Then all headlines
         for _, row in group.iterrows():
             lang_attr = f' xml:lang="{row["xml_lang"]}"' if row["xml_lang"] else ""
             value = "" if row["action"] == "clear" else escape_xml(row["headline"])
@@ -330,6 +411,7 @@ def generate_xml(df, catalog_id="hb-eu"):
 
     xml += '</catalog>'
     return xml
+
 
 st.divider()
 
