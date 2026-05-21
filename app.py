@@ -243,7 +243,7 @@ if st.session_state.df is not None:
         prompt = f"""
 You are an international SEO specialist for a luxury fashion ecommerce brand.
 
-Generate SEO metadata for every category_id + locale combination in the CSV below.
+Generate SEO-optimised metadata for every category_id + locale combination in the CSV below.
 
 CATEGORY INPUTS CSV:
 {categories_csv}
@@ -256,8 +256,8 @@ SEO Brief: {brief}
 
 STRICT TAXONOMY:
 1. For non-sale pages:
-- page_title must follow: [Localized Gender's Product] | [Brand]
-- headline must follow: [Localized Gender's Product]
+- page_title must follow: [Localized Premium Gender's Product] | [Brand]
+- headline must follow: [Localized Product for Gender]
 - page_url must follow: [localized-gender]-[localized-product]
 
 2. For sale pages:
