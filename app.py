@@ -333,6 +333,7 @@ category_id,locale,page_description,page_title,page_url,headline
 """
 
 response = model.generate_content(prompt)
+
 json_text = response.text.strip()
 
 # Remove markdown fences if Gemini adds them
@@ -347,7 +348,21 @@ ai_df = pd.DataFrame(ai_data)
 ai_df["category_id"] = ai_df["category_id"].astype(str)
 ai_df["locale"] = ai_df["locale"].astype(str)
 
-        for index, row in df.iterrows():
+for index, row in df.iterrows():
+    if row["action"] == "update":
+        locale_key = row["xml_lang"] if row["xml_lang"] else "default"
+        category_key = str(row["category_id"])
+
+        match = ai_df[
+            (ai_df["category_id"] == category_key) &
+            (ai_df["locale"] == locale_key)
+        ]
+
+        if not match.empty:
+            df.at[index, "page_description"] = match.iloc[0]["page_description"]
+            df.at[index, "page_title"] = match.iloc[0]["page_title"]
+            df.at[index, "page_url"] = match.iloc[0]["page_url"]
+            df.at[index, "headline"] = match.iloc[0]["headline"]
             if row["action"] == "update":
                 locale_key = row["xml_lang"] if row["xml_lang"] else "default"
                 category_key = str(row["category_id"])
