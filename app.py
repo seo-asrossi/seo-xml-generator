@@ -3,7 +3,7 @@ import pandas as pd
 import google.generativeai as genai
 from dotenv import load_dotenv
 import os
-import io
+import json
 
 load_dotenv()
 
@@ -42,7 +42,7 @@ if "category_input_df" not in st.session_state:
     })
 
 st.subheader("Category Inputs")
-st.caption("Add up to 10 category IDs. Use one row per category. Maximum combination: 10 cat-ids in 3 different languages")
+st.caption("Add up to 10 category IDs. Use one row per category. Max combination: 10 cat-ids in 3 languages.")
 
 category_input_df = st.data_editor(
     st.session_state.category_input_df,
@@ -52,10 +52,7 @@ category_input_df = st.data_editor(
     column_config={
         "category_id": st.column_config.TextColumn("Category ID"),
         "landing_page_name": st.column_config.TextColumn("Landing Page Name"),
-        "gender": st.column_config.SelectboxColumn(
-            "Gender",
-            options=["Men", "Women", "Kids"]
-        ),
+        "gender": st.column_config.SelectboxColumn("Gender", options=["Men", "Women", "Kids"]),
         "product": st.column_config.TextColumn("Product")
     }
 )
@@ -77,12 +74,8 @@ brand = st.text_input("Brand", value="HUGO BOSS")
 is_sale = st.checkbox("Sale page")
 
 discount = ""
-
 if is_sale:
-    discount = st.text_input(
-        "Discount message",
-        placeholder="e.g. up to 40% off"
-    )
+    discount = st.text_input("Discount message", placeholder="e.g. up to 40% off")
 
 brief = st.text_area(
     "SEO Brief",
@@ -121,11 +114,7 @@ if target_level == "default":
             })
 
 elif target_level == "language":
-    selected_languages = st.multiselect(
-        "Languages to update",
-        LANGUAGES,
-        default=["en"]
-    )
+    selected_languages = st.multiselect("Languages to update", LANGUAGES, default=["en"])
 
     if len(selected_languages) > 3:
         st.warning("This is a large batch. For easier QA, consider using up to 3 languages at a time.")
@@ -179,11 +168,7 @@ elif target_level == "country-language":
                 })
 
 else:
-    selected_languages = st.multiselect(
-        "Languages to update",
-        LANGUAGES,
-        default=["en"]
-    )
+    selected_languages = st.multiselect("Languages to update", LANGUAGES, default=["en"])
 
     selected_country_languages = st.multiselect(
         "Country-language overrides to clear",
@@ -327,59 +312,56 @@ Each object must contain:
 - page_title
 - page_url
 - headline
-
-Columns:
-category_id,locale,page_description,page_title,page_url,headline
 """
 
-response = model.generate_content(prompt)
+        try:
+            response = model.generate_content(prompt)
+            json_text = response.text.strip()
+            json_text = json_text.replace("```json", "").replace("```", "").strip()
 
-json_text = response.text.strip()
+            ai_data = json.loads(json_text)
+            ai_df = pd.DataFrame(ai_data)
 
-# Remove markdown fences if Gemini adds them
-json_text = json_text.replace("```json", "").replace("```", "").strip()
+            required_columns = [
+                "category_id",
+                "locale",
+                "page_description",
+                "page_title",
+                "page_url",
+                "headline"
+            ]
 
-import json
+            missing_columns = [col for col in required_columns if col not in ai_df.columns]
 
-ai_data = json.loads(json_text)
+            if missing_columns:
+                st.error(f"AI output is missing required columns: {missing_columns}")
+                st.code(json_text)
+            else:
+                ai_df["category_id"] = ai_df["category_id"].astype(str)
+                ai_df["locale"] = ai_df["locale"].astype(str)
 
-ai_df = pd.DataFrame(ai_data)
+                for index, row in df.iterrows():
+                    if row["action"] == "update":
+                        locale_key = row["xml_lang"] if row["xml_lang"] else "default"
+                        category_key = str(row["category_id"])
 
-ai_df["category_id"] = ai_df["category_id"].astype(str)
-ai_df["locale"] = ai_df["locale"].astype(str)
+                        match = ai_df[
+                            (ai_df["category_id"] == category_key) &
+                            (ai_df["locale"] == locale_key)
+                        ]
 
-for index, row in df.iterrows():
-    if row["action"] == "update":
-        locale_key = row["xml_lang"] if row["xml_lang"] else "default"
-        category_key = str(row["category_id"])
+                        if not match.empty:
+                            df.at[index, "page_description"] = match.iloc[0]["page_description"]
+                            df.at[index, "page_title"] = match.iloc[0]["page_title"]
+                            df.at[index, "page_url"] = match.iloc[0]["page_url"]
+                            df.at[index, "headline"] = match.iloc[0]["headline"]
 
-        match = ai_df[
-            (ai_df["category_id"] == category_key) &
-            (ai_df["locale"] == locale_key)
-        ]
+                st.session_state.df = df
+                st.success("AI SEO copy generated.")
 
-        if not match.empty:
-            df.at[index, "page_description"] = match.iloc[0]["page_description"]
-            df.at[index, "page_title"] = match.iloc[0]["page_title"]
-            df.at[index, "page_url"] = match.iloc[0]["page_url"]
-            df.at[index, "headline"] = match.iloc[0]["headline"]
-            if row["action"] == "update":
-                locale_key = row["xml_lang"] if row["xml_lang"] else "default"
-                category_key = str(row["category_id"])
-
-                match = ai_df[
-                    (ai_df["category_id"] == category_key) &
-                    (ai_df["locale"] == locale_key)
-                ]
-
-                if not match.empty:
-                    df.at[index, "page_description"] = match.iloc[0]["page_description"]
-                    df.at[index, "page_title"] = match.iloc[0]["page_title"]
-                    df.at[index, "page_url"] = match.iloc[0]["page_url"]
-                    df.at[index, "headline"] = match.iloc[0]["headline"]
-
-        st.session_state.df = df
-        st.success("AI SEO copy generated.")
+        except Exception as e:
+            st.error("The AI output could not be processed. Please try again or reduce the batch size.")
+            st.exception(e)
 
     edited_df = st.data_editor(
         st.session_state.df,
