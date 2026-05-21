@@ -42,7 +42,7 @@ if "category_input_df" not in st.session_state:
     })
 
 st.subheader("Category Inputs")
-st.caption("Add up to 10 category IDs. Use one row per category.")
+st.caption("Add up to 10 category IDs. Use one row per category. Maximum combination: 10 cat-ids in 3 different languages")
 
 category_input_df = st.data_editor(
     st.session_state.category_input_df,
