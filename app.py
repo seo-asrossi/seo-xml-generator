@@ -398,13 +398,13 @@ def generate_xml(df, catalog_id="hb-eu"):
 
         for _, row in group.iterrows():
             lang_attr = f' xml:lang="{row["xml_lang"]}"' if row["xml_lang"] else ""
-            value = "" if row["action"] == "clear" else escape_xml(row["page_description"])
-            xml += f'      <page-description{lang_attr}>{value}</page-description>\n'
+            value = "" if row["action"] == "clear" else escape_xml(row["page_title"])
+            xml += f'      <page-title{lang_attr}>{value}</page-title>\n'
 
         for _, row in group.iterrows():
             lang_attr = f' xml:lang="{row["xml_lang"]}"' if row["xml_lang"] else ""
-            value = "" if row["action"] == "clear" else escape_xml(row["page_title"])
-            xml += f'      <page-title{lang_attr}>{value}</page-title>\n'
+            value = "" if row["action"] == "clear" else escape_xml(row["page_description"])
+            xml += f'      <page-description{lang_attr}>{value}</page-description>\n'
 
         for _, row in group.iterrows():
             lang_attr = f' xml:lang="{row["xml_lang"]}"' if row["xml_lang"] else ""
