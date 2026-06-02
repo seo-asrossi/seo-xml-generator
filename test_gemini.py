@@ -55,14 +55,10 @@ URL RULES:
 - do not transliterate Japanese or Korean URLs
 - keep Japanese and Korean URLs in English
 
-META DESCRIPTION:
-- max 155 characters
-- premium tone
-
 Return ONLY valid CSV.
 
 Columns:
-locale,page_title,page_description,page_url,headline
+locale,page_title,page_url,headline
 """
 
 response = model.generate_content(prompt)
