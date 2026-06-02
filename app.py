@@ -16,7 +16,7 @@ st.title("SEO XML Generator for SFCC")
 LANGUAGES = ["en", "de", "fr", "it", "es", "pt", "nl", "pl", "da", "sv", "ja", "ko"]
 
 COUNTRY_LANGUAGES = [
-    "en-GB", "en-IE",
+    "en-GB", "en-IE", "en-PT", "en-ES", "en-IT", "en-AU", "en-LU, "en-GR","
     "de-DE", "de-AT", "de-CH",
     "fr-FR", "fr-BE", "fr-CH",
     "it-IT", "it-CH",
